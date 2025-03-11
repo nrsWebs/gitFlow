@@ -1,0 +1,133 @@
+#!/bin/bash
+GIT='git --git-dir='$PWD'/src/.git'
+
+# BRANCH
+MASTER='master'
+DEVELOP='develop'
+STG='stg'
+
+# -----------
+# FEATURE
+# -----------
+start.feature() {
+    $GIT checkout "$DEVELOP"
+    $GIT pull origin "$DEVELOP"
+    $GIT checkout -b "$1"
+}
+
+end.feature() {
+    read -p $'\e[31mIndicate the tag (task code):\e[0m ' tagname
+    $GIT tag "$tagname"
+    $GIT checkout "$DEVELOP"
+    $GIT pull origin "$DEVELOP"
+    echo $'\e[33m---------------MERGE---------------\e[0m '
+    $GIT merge "$1"
+    echo $'\e[33m-----------------------------------\e[0m '
+}
+
+# -----------
+# HOTFIX
+# -----------
+start.hotfix() {
+    $GIT checkout "$MASTER"
+    $GIT pull origin "$MASTER"
+    $GIT checkout -b "$1"
+}
+
+end.hotfix() {
+    read -p $'\e[31mIndicate the tag (task code):\e[0m ' tagname
+    $GIT tag "$tagname"
+
+    # MASTER
+    $GIT checkout "$MASTER"
+    $GIT pull origin "$MASTER"
+    echo $'\e[33m---------------MERGE---------------\e[0m '
+    $GIT merge "$1"
+    echo $'\e[33m-----------------------------------\e[0m '
+
+    # PUSH
+    read -p $'\e[31mMerge OK?\e[0m ' answer
+    echo    # (optional) move to a new line
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT push origin "$MASTER"
+    fi
+
+    # DEVELOP
+    $GIT checkout "$DEVELOP"
+    $GIT pull origin "$DEVELOP"
+    echo $'\e[33m---------------MERGE---------------\e[0m '
+    $GIT merge "$1"
+    echo $'\e[33m-----------------------------------\e[0m '
+
+    # PUSH
+    read -p $'\e[31mMerge OK?\e[0m ' answer
+    echo    # (optional) move to a new line
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT push origin "$DEVELOP"
+    fi
+}
+
+# -----------
+# PRE
+# -----------
+deploy.pre() {
+    $GIT checkout "$STG"
+    $GIT pull origin "$STG"
+    echo $'\e[33m---------------MERGE---------------\e[0m '
+    $GIT merge "$1"
+    echo $'\e[33m-----------------------------------\e[0m '
+
+    # PUSH
+    read -p $'\e[31mMerge OK?\e[0m ' answer
+    echo    # (opcional) mover a una nueva línea
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT push origin "$STG"
+    fi
+}
+
+# -----------
+# PRO
+# -----------
+deploy.pro() {
+    # UPDATE DEVELOP & MERGE
+    $GIT checkout "$DEVELOP"
+    $GIT pull origin "$DEVELOP"
+    echo $'\e[33m---------------MERGE---------------\e[0m '
+    $GIT merge "$1"
+    echo $'\e[33m-----------------------------------\e[0m '
+    
+    # PUSH
+    read -p $'\e[31mMerge OK?\e[0m ' answer
+    echo    # (opcional) mover a una nueva línea
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT push origin "$DEVELOP"
+    fi
+
+    $GIT push origin "$DEVELOP"
+
+    # UPDATE MASTER
+    read -p $'\e[31mUpdate '"$MASTER"'?\e[0m ' answer
+    echo    # (optional) move to a new line
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT fetch -a
+        $GIT checkout "$MASTER"
+        $GIT pull origin "$MASTER"
+        $GIT merge "$DEVELOP"
+        # $GIT rebase -i "$DEVELOP"
+
+        # PUSH
+        read -p $'\e[31mMerge OK?\e[0m ' answer
+        echo    # (optional) move to a new line
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            $GIT push origin "$MASTER"
+        fi
+    fi
+
+    read -p $'\e[31mDelete task branch?\e[0m ' answer
+    echo    # (optional) move to a new line
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT branch -D "$1"
+    fi
+}
+
+"$@"

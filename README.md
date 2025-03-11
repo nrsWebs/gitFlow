@@ -14,32 +14,32 @@ El script proporciona los siguientes comandos:
 ### 1. **Feature Branch**
 #### Crear una nueva feature branch:
 ```sh
-./script.sh start.feature nombre-de-la-feature
+./gitflow start.feature nombre-de-la-feature
 ```
 #### Finalizar una feature branch:
 ```sh
-./script.sh end.feature nombre-de-la-feature
+./gitflow end.feature nombre-de-la-feature
 ```
 
 ### 2. **Hotfix Branch**
 #### Crear una nueva hotfix branch:
 ```sh
-./script.sh start.hotfix nombre-del-hotfix
+./gitflow start.hotfix nombre-del-hotfix
 ```
 #### Finalizar una hotfix branch:
 ```sh
-./script.sh end.hotfix nombre-del-hotfix
+./gitflow end.hotfix nombre-del-hotfix
 ```
 
 ### 3. **Deploy a Staging**
 ```sh
-./script.sh deploy.pre nombre-de-la-rama
+./gitflow deploy.pre nombre-de-la-rama
 ```
 Este comando fusiona la rama especificada en `stg` y permite hacer un push a origen.
 
 ### 4. **Deploy a Producción**
 ```sh
-./script.sh deploy.pro nombre-de-la-rama
+./gitflow deploy.pro nombre-de-la-rama
 ```
 Este comando realiza:
 1. Merge en `develop` y push a origen.

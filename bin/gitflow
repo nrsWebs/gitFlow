@@ -1,5 +1,5 @@
 #!/bin/bash
-GIT='git --git-dir='$PWD'/src/.git'
+GIT='git --git-dir='$PWD'/.git'
 
 # BRANCH
 MASTER='master'
@@ -12,7 +12,7 @@ STG='stg'
 start.feature() {
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
-    pullConflict()
+    pullConflict
     $GIT checkout -b "$1"
 }
 
@@ -22,10 +22,17 @@ end.feature() {
     $GIT tag "$tagname"
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
-    pullConflict()
+    pullConflict
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
+
+     # PUSH
+    read -p $'\e[31mMerge OK?\e[0m ' answer
+    echo    # (opcional) mover a una nueva línea
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        $GIT push origin "$DEVELOP"
+    fi
 }
 
 # -----------
@@ -34,7 +41,7 @@ end.feature() {
 start.hotfix() {
     $GIT checkout "$MASTER"
     $GIT pull origin "$MASTER"
-    pullConflict()
+    pullConflict
     $GIT checkout -b "$1"
 }
 
@@ -45,7 +52,7 @@ end.hotfix() {
     # MASTER
     $GIT checkout "$MASTER"
     $GIT pull origin "$MASTER"
-    pullConflict()
+    pullConflict
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -60,7 +67,7 @@ end.hotfix() {
     # DEVELOP
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
-    pullConflict()
+    pullConflict
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -76,10 +83,11 @@ end.hotfix() {
 # -----------
 # PRE
 # -----------
+
 deploy.pre() {
     $GIT checkout "$STG"
     $GIT pull origin "$STG"
-    pullConflict()
+    pullConflict
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -99,7 +107,7 @@ deploy.pro() {
     # UPDATE DEVELOP & MERGE
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
-    pullConflict()
+    pullConflict
     # UPDATE MASTER
     read -p $'\e[31mUpdate '"$MASTER"$'?\e[0m ' answer
     echo    # (optional) move to a new line
@@ -107,8 +115,10 @@ deploy.pro() {
         $GIT fetch -a
         $GIT checkout "$MASTER"
         $GIT pull origin "$MASTER"
-        pullConflict()
-        $GIT merge "$DEVELOP"
+        pullConflict
+        echo $'\e[33m---------------MERGE---------------\e[0m '
+        $GIT merge "$1"
+        echo $'\e[33m-----------------------------------\e[0m '
         # $GIT rebase -i "$DEVELOP"
 
         # PUSH

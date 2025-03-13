@@ -12,14 +12,17 @@ STG='stg'
 start.feature() {
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
+    pullConflict()
     $GIT checkout -b "$1"
 }
 
 end.feature() {
+    $GIT checkout "$1"
     read -p $'\e[31mIndicate the tag (task code):\e[0m ' tagname
     $GIT tag "$tagname"
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
+    pullConflict()
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -31,6 +34,7 @@ end.feature() {
 start.hotfix() {
     $GIT checkout "$MASTER"
     $GIT pull origin "$MASTER"
+    pullConflict()
     $GIT checkout -b "$1"
 }
 
@@ -41,6 +45,7 @@ end.hotfix() {
     # MASTER
     $GIT checkout "$MASTER"
     $GIT pull origin "$MASTER"
+    pullConflict()
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -55,6 +60,7 @@ end.hotfix() {
     # DEVELOP
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
+    pullConflict()
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -73,6 +79,7 @@ end.hotfix() {
 deploy.pre() {
     $GIT checkout "$STG"
     $GIT pull origin "$STG"
+    pullConflict()
     echo $'\e[33m---------------MERGE---------------\e[0m '
     $GIT merge "$1"
     echo $'\e[33m-----------------------------------\e[0m '
@@ -92,26 +99,15 @@ deploy.pro() {
     # UPDATE DEVELOP & MERGE
     $GIT checkout "$DEVELOP"
     $GIT pull origin "$DEVELOP"
-    echo $'\e[33m---------------MERGE---------------\e[0m '
-    $GIT merge "$1"
-    echo $'\e[33m-----------------------------------\e[0m '
-    
-    # PUSH
-    read -p $'\e[31mMerge OK?\e[0m ' answer
-    echo    # (opcional) mover a una nueva línea
-    if [[ "$answer" =~ ^[Yy]$ ]]; then
-        $GIT push origin "$DEVELOP"
-    fi
-
-    $GIT push origin "$DEVELOP"
-
+    pullConflict()
     # UPDATE MASTER
-    read -p $'\e[31mUpdate '"$MASTER"'?\e[0m ' answer
+    read -p $'\e[31mUpdate '"$MASTER"$'?\e[0m ' answer
     echo    # (optional) move to a new line
     if [[ "$answer" =~ ^[Yy]$ ]]; then
         $GIT fetch -a
         $GIT checkout "$MASTER"
         $GIT pull origin "$MASTER"
+        pullConflict()
         $GIT merge "$DEVELOP"
         # $GIT rebase -i "$DEVELOP"
 
@@ -120,13 +116,31 @@ deploy.pro() {
         echo    # (optional) move to a new line
         if [[ "$answer" =~ ^[Yy]$ ]]; then
             $GIT push origin "$MASTER"
+        else 
+            echo $'\e[34mResuelve los conflictos\e[0m '
+            exit 1
         fi
+    else 
+        exit 1
     fi
 
     read -p $'\e[31mDelete task branch?\e[0m ' answer
     echo    # (optional) move to a new line
     if [[ "$answer" =~ ^[Yy]$ ]]; then
         $GIT branch -D "$1"
+    fi
+}
+
+
+# -----------
+
+pullConflict() {
+    # Verificar si hay conflictos después del pull
+    if $GIT diff --name-only --diff-filter=U | grep -q .; then
+        echo -e "\e[34m¡Conflictos detectados! Resuélvalos antes de continuar.\e[0m"
+        exit 1
+    else
+        echo -e "\e[34mExtracción completada exitosamente, no se encontraron conflictos.\e[0m"
     fi
 }
 

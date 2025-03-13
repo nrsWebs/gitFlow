@@ -39,7 +39,7 @@ Este comando fusiona la rama especificada en `stg` y permite hacer un push a ori
 
 ### 4. **Deploy a Producción**
 ```sh
-./gitflow deploy.pro nombre-de-la-rama
+./gitflow deploy.pro
 ```
 Este comando realiza:
 1. Merge en `develop` y push a origen.
